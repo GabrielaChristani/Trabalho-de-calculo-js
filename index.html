@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalcPro - Calculadora de Cálculo Numérico</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://unpkg.com/mathjs@12.4.1/lib/browser/math.js"></script>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: {} }
+        }
+    </script>
+
+    <style>
+        @import url('https://rsms.me/inter/inter.css');
+        body { font-family: 'Inter', sans-serif; }
+        .glass-effect {
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background-color: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(209, 213, 219, 0.3);
+        }
+        .dark .glass-effect {
+            background-color: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .function-input { font-family: 'Fira Code', 'Courier New', monospace; }
+        .keypad-btn { transition: all 0.15s ease-in-out; }
+        .keypad-btn:active { transform: scale(0.95); }
+        .step-card {
+            background-color: rgba(255, 255, 255, 0.5);
+            border-left: 4px solid #3b82f6; /* Azul-500 */
+        }
+        .dark .step-card {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        .katex { font-size: 1.1em !important; }
+    </style>
+</head>
+
+<body class="bg-slate-50 dark:bg-gray-900 text-slate-800 dark:text-slate-200 min-h-screen transition-colors duration-300 p-4 md:p-6">
+    
+    <main class="max-w-7xl mx-auto">
+        <nav class="glass-effect rounded-2xl p-4 shadow-lg sticky top-4 z-50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                        <span class="text-white font-bold text-lg">∫</span>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">CalcPro</h1>
+                        <p class="text-xs text-slate-600 dark:text-slate-400">Cálculo Numérico Avançado</p>
+                    </div>
+                </div>
+                
+                <div id="nav-operations" class="hidden md:flex items-center space-x-6 text-sm font-medium text-slate-600 dark:text-slate-300">
+                    <button data-operation="derivative" class="nav-btn transition-colors hover:text-blue-500">📈 Derivadas</button>
+                    <button data-operation="critical" class="nav-btn transition-colors hover:text-green-500">🎯 Pontos Críticos</button>
+                    <button data-operation="integral" class="nav-btn transition-colors hover:text-purple-500">∫ Integrais</button>
+                </div>
+
+                <div class="flex items-center space-x-3">
+                    <button id="theme-toggle-btn" class="p-2 rounded-lg bg-white/20 dark:bg-black/20 hover:bg-white/30 dark:hover:bg-black/30 transition-all duration-300">
+                        <span id="themeIcon" class="text-lg">🌙</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div class="lg:col-span-1">
+                <div class="glass-effect rounded-2xl p-6 shadow-lg sticky top-24">
+                    <h3 class="text-lg font-bold mb-4">Teoria Rápida</h3>
+                    <div id="theoryContent" class="space-y-4 text-sm">
+                        <div class="bg-white/50 dark:bg-black/20 rounded-lg p-3">
+                            <h4 class="font-semibold mb-2">💡 Bem-vindo!</h4>
+                            <p class="text-slate-600 dark:text-slate-300">Selecione uma operação no menu superior para começar.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-3">
+                <div id="inputSection" class="glass-effect rounded-2xl p-6 shadow-lg mb-6 animate-fade-in">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold flex items-center">
+                            <span id="operationIcon" class="mr-3 text-2xl">🧮</span>
+                            <span id="operationTitle">Calculadora</span>
+                        </h3>
+                        <div class="flex space-x-2">
+                            <button id="clear-btn" class="px-3 py-1 text-sm bg-slate-200 dark:bg-slate-700 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">Limpar</button>
+                            <button id="example-btn" class="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800/50 transition-colors">Exemplo</button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-white/50 dark:bg-black/20 rounded-xl p-4">
+                            <label for="functionInput" class="block text-sm font-semibold mb-3">📝 Função f(x)</label>
+                            <div class="relative">
+                                <input type="text" id="functionInput" placeholder="Selecione uma operação..." class="function-input w-full p-4 border-2 border-slate-200 dark:border-slate-600 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-lg transition-all" disabled>
+                                <div id="functionStatus" class="absolute right-4 top-1/2 -translate-y-1/2"></div>
+                            </div>
+                            <div id="keypad" class="mt-4 grid grid-cols-5 gap-2 text-slate-800 dark:text-slate-200 font-semibold">
+                                <button data-value="sin(" class="keypad-btn p-3 bg-blue-100 dark:bg-blue-900/50 rounded-lg">sin</button>
+                                <button data-value="cos(" class="keypad-btn p-3 bg-blue-100 dark:bg-blue-900/50 rounded-lg">cos</button>
+                                <button data-value="log(" class="keypad-btn p-3 bg-blue-100 dark:bg-blue-900/50 rounded-lg">ln</button>
+                                <button data-value="(" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">(</button>
+                                <button data-value=")" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">)</button>
+                                <button data-value="7" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">7</button>
+                                <button data-value="8" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">8</button>
+                                <button data-value="9" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">9</button>
+                                <button data-value="/" class="keypad-btn p-3 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-700 dark:text-purple-300">÷</button>
+                                <button data-action="backspace" class="keypad-btn p-3 bg-red-100 dark:bg-red-900/50 rounded-lg text-red-600 dark:text-red-300 text-xl">⌫</button>
+                                <button data-value="4" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">4</button>
+                                <button data-value="5" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">5</button>
+                                <button data-value="6" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">6</button>
+                                <button data-value="*" class="keypad-btn p-3 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-700 dark:text-purple-300">×</button>
+                                <button data-value="^" class="keypad-btn p-3 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg text-yellow-700 dark:text-yellow-300">^</button>
+                                <button data-value="1" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">1</button>
+                                <button data-value="2" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">2</button>
+                                <button data-value="3" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">3</button>
+                                <button data-value="-" class="keypad-btn p-3 bg-green-100 dark:bg-green-900/50 rounded-lg text-green-700 dark:text-green-300">-</button>
+                                <button data-value="+" class="keypad-btn p-3 bg-green-100 dark:bg-green-900/50 rounded-lg row-span-2 text-2xl text-green-700 dark:text-green-300">+</button>
+                                <button data-value="0" class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg col-span-2">0</button>
+                                <button data-value="." class="keypad-btn p-3 bg-slate-200 dark:bg-slate-700 rounded-lg">.</button>
+                                <button data-value="x" class="keypad-btn p-3 bg-pink-100 dark:bg-pink-900/50 rounded-lg text-pink-700 dark:text-pink-300">x</button>
+                            </div>
+                        </div>
+
+                        <div id="derivativePointInput" class="hidden bg-white/50 dark:bg-black/20 rounded-xl p-4">
+                            <label for="derivativePoint" class="block text-sm font-semibold mb-3">📍 Ponto de Análise (x)</label>
+                            <input type="number" id="derivativePoint" value="0" step="0.1" class="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700">
+                        </div>
+                        <div id="intervalInputs" class="hidden bg-white/50 dark:bg-black/20 rounded-xl p-4">
+                            <label class="block text-sm font-semibold mb-3">📏 Intervalo de Análise</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label for="lowerLimit" class="block text-xs mb-1">Limite inferior (a)</label>
+                                    <input type="number" id="lowerLimit" value="-5" step="0.1" class="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700">
+                                </div>
+                                <div>
+                                    <label for="upperLimit" class="block text-xs mb-1">Limite superior (b)</label>
+                                    <input type="number" id="upperLimit" value="5" step="0.1" class="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="calculateBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 rounded-xl shadow-lg transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100">
+                            Calcular
+                        </button>
+                    </div>
+                </div>
+
+                <div id="resultsSection" class="hidden animate-fade-in">
+                    <div class="space-y-6">
+                        <div class="glass-effect rounded-2xl p-6 shadow-lg">
+                            <h3 class="text-xl font-bold mb-4 flex items-center"><span class="mr-3 text-2xl">📊</span>Resumo do Resultado</h3>
+                            <div id="summaryResults"></div>
+                        </div>
+
+                        <div class="glass-effect rounded-2xl p-6 shadow-lg">
+                            <h3 class="text-xl font-bold mb-4 flex items-center"><span class="mr-3 text-2xl">📝</span>Passo a Passo da Resolução</h3>
+                            <div id="stepByStepResults" class="space-y-4"></div>
+                        </div>
+                        
+                        <div class="glass-effect rounded-2xl p-6 shadow-lg">
+                            <h3 class="text-xl font-bold mb-4 flex items-center"><span class="mr-3 text-2xl">📈</span>Visualização Gráfica</h3>
+                            <div id="plotDiv" class="rounded-xl overflow-hidden h-[500px]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const CalcProApp = {
+            state: {
+                currentOperation: null,
+                isDarkMode: false,
+            },
+            ui: {},
+            config: {
+                operations: {
+                    derivative: { title: 'Cálculo de Derivadas', icon: '📈', example: 'x^3 - 2*x^2 + 5' },
+                    critical: { title: 'Análise de Pontos Críticos', icon: '🎯', example: 'x^3 - 3*x' },
+                    integral: { title: 'Integração Numérica', icon: '∫', example: 'sin(x) + 1' },
+                },
+                plotLayout: {
+                    showlegend: true,
+                    hovermode: 'x unified',
+                    margin: { t: 50, r: 20, b: 50, l: 50 },
+                }
+            },
+
+            // --- MÉTODOS DE INICIALIZAÇÃO E GERENCIAMENTO DE UI ---
+            init() {
+                this.cacheDOM();
+                this.bindEventListeners();
+                this.loadInitialState();
+                this.updateUIForOperation();
+            },
+
+            cacheDOM() {
+                this.ui = {
+                    themeToggleBtn: document.getElementById('theme-toggle-btn'),
+                    themeIcon: document.getElementById('themeIcon'),
+                    navOperations: document.getElementById('nav-operations'),
+                    functionInput: document.getElementById('functionInput'),
+                    functionStatus: document.getElementById('functionStatus'),
+                    keypad: document.getElementById('keypad'),
+                    operationTitle: document.getElementById('operationTitle'),
+                    operationIcon: document.getElementById('operationIcon'),
+                    derivativePointInput: document.getElementById('derivativePointInput'),
+                    intervalInputs: document.getElementById('intervalInputs'),
+                    clearBtn: document.getElementById('clear-btn'),
+                    exampleBtn: document.getElementById('example-btn'),
+                    calculateBtn: document.getElementById('calculateBtn'),
+                    resultsSection: document.getElementById('resultsSection'),
+                    summaryResults: document.getElementById('summaryResults'),
+                    stepByStepResults: document.getElementById('stepByStepResults'),
+                    plotDiv: document.getElementById('plotDiv'),
+                };
+            },
+
+            bindEventListeners() {
+                this.ui.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+                this.ui.navOperations.addEventListener('click', (e) => {
+                    if (e.target.dataset.operation) this.selectOperation(e.target.dataset.operation);
+                });
+                this.ui.functionInput.addEventListener('input', () => this.validateFunction());
+                this.ui.keypad.addEventListener('click', (e) => {
+                    const target = e.target.closest('button');
+                    if (!target) return;
+                    const { value, action } = target.dataset;
+                    if (value) this.insertIntoInput(value);
+                    if (action === 'backspace') this.handleBackspace();
+                });
+                this.ui.clearBtn.addEventListener('click', () => this.clearAll());
+                this.ui.exampleBtn.addEventListener('click', () => this.loadExample());
+                this.ui.calculateBtn.addEventListener('click', () => this.handleCalculation());
+            },
+
+            loadInitialState() {
+                const savedTheme = localStorage.getItem('theme');
+                this.state.isDarkMode = savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                this.updateTheme();
+            },
+
+            selectOperation(opName) {
+                this.state.currentOperation = opName;
+                this.updateUIForOperation();
+                this.ui.functionInput.focus();
+            },
+
+            updateUIForOperation() {
+                const op = this.config.operations[this.state.currentOperation];
+                
+                this.ui.navOperations.querySelectorAll('.nav-btn').forEach(btn => {
+                    const isSelected = btn.dataset.operation === this.state.currentOperation;
+                    btn.classList.toggle('font-bold', isSelected);
+                    btn.classList.toggle('text-blue-500', isSelected);
+                    btn.classList.toggle('dark:text-blue-400', isSelected);
+                });
+
+                if (op) {
+                    this.ui.operationTitle.textContent = op.title;
+                    this.ui.operationIcon.textContent = op.icon;
+                    this.ui.functionInput.placeholder = `Ex: ${op.example}`;
+                    this.ui.functionInput.disabled = false;
+                } else {
+                    this.ui.operationTitle.textContent = 'Calculadora';
+                    this.ui.operationIcon.textContent = '🧮';
+                    this.ui.functionInput.placeholder = 'Selecione uma operação...';
+                    this.ui.functionInput.disabled = true;
+                }
+                
+                this.ui.derivativePointInput.classList.toggle('hidden', this.state.currentOperation !== 'derivative');
+                this.ui.intervalInputs.classList.toggle('hidden', !['critical', 'integral'].includes(this.state.currentOperation));
+                
+                this.clearAll();
+            },
+
+            toggleTheme() {
+                this.state.isDarkMode = !this.state.isDarkMode;
+                this.updateTheme();
+            },
+
+            updateTheme() {
+                document.documentElement.classList.toggle('dark', this.state.isDarkMode);
+                this.ui.themeIcon.textContent = this.state.isDarkMode ? '☀️' : '🌙';
+                localStorage.setItem('theme', this.state.isDarkMode ? 'dark' : 'light');
+                this.updatePlotTheme();
+            },
+
+            // --- MÉTODOS DE MANIPULAÇÃO DO INPUT ---
+
+            insertIntoInput(value) {
+                const { functionInput } = this.ui;
+                const { selectionStart, selectionEnd } = functionInput;
+                functionInput.value = functionInput.value.substring(0, selectionStart) + value + functionInput.value.substring(selectionEnd);
+                const newPos = selectionStart + value.length;
+                functionInput.focus();
+                functionInput.setSelectionRange(newPos, newPos);
+                this.validateFunction();
+            },
+
+            handleBackspace() {
+                const { functionInput } = this.ui;
+                const { selectionStart, selectionEnd } = functionInput;
+                if (selectionStart > 0 && selectionStart === selectionEnd) {
+                    const newPos = selectionStart - 1;
+                    functionInput.value = functionInput.value.substring(0, newPos) + functionInput.value.substring(selectionEnd);
+                    functionInput.focus();
+                    functionInput.setSelectionRange(newPos, newPos);
+                }
+                this.validateFunction();
+            },
+            
+            validateFunction() {
+                const funcStr = this.ui.functionInput.value.trim();
+                if (!funcStr) {
+                    this.ui.functionStatus.innerHTML = '';
+                    this.ui.functionInput.classList.remove('border-red-500', 'border-green-500');
+                    return false;
+                }
+                try {
+                    math.parse(this.helpers.parseFunction(funcStr)).evaluate({x: 1});
+                    this.ui.functionStatus.innerHTML = '<span class="text-green-500 text-xl">✓</span>';
+                    this.ui.functionInput.classList.remove('border-red-500'); this.ui.functionInput.classList.add('border-green-500');
+                    return true;
+                } catch (e) {
+                    this.ui.functionStatus.innerHTML = '<span class="text-red-500 text-xl">✗</span>';
+                    this.ui.functionInput.classList.remove('border-green-500'); this.ui.functionInput.classList.add('border-red-500');
+                    return false;
+                }
+            },
+            
+            clearAll() {
+                this.ui.functionInput.value = '';
+                this.validateFunction();
+                this.ui.resultsSection.classList.add('hidden');
+                document.getElementById('derivativePoint').value = 0;
+                document.getElementById('lowerLimit').value = -5;
+                document.getElementById('upperLimit').value = 5;
+            },
+
+            loadExample() {
+                if(this.state.currentOperation) {
+                    this.ui.functionInput.value = this.config.operations[this.state.currentOperation].example;
+                    this.validateFunction();
+                }
+            },
+
+            // --- LÓGICA PRINCIPAL DE CÁLCULO E RENDERIZAÇÃO ---
+
+            async handleCalculation() {
+                if (!this.state.currentOperation || !this.validateFunction()) return;
+
+                this.ui.calculateBtn.disabled = true;
+                try {
+                    const funcStr = this.helpers.parseFunction(this.ui.functionInput.value);
+                    let resultData = {};
+                    switch (this.state.currentOperation) {
+                        case 'derivative': resultData = this.calculators.derivative(funcStr); break;
+                        case 'critical': resultData = this.calculators.critical(funcStr); break;
+                        case 'integral': resultData = this.calculators.integral(funcStr); break;
+                    }
+                    this.renderResults(resultData);
+                } catch (error) {
+                    console.error("Erro de cálculo:", error);
+                } finally {
+                    this.ui.calculateBtn.disabled = false;
+                }
+            },
+            
+            renderResults({ summaryHTML, stepsHTML, plotData, title }) {
+                this.ui.summaryResults.innerHTML = summaryHTML;
+                this.ui.stepByStepResults.innerHTML = stepsHTML || '';
+                
+                if (stepsHTML) {
+                    renderMathInElement(this.ui.stepByStepResults, {
+                        delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]
+                    });
+                }
+
+                this.ui.resultsSection.classList.remove('hidden');
+                window.scrollTo({ top: this.ui.resultsSection.offsetTop, behavior: 'smooth' });
+
+                this.renderPlot(plotData, title);
+            },
+            
+            renderPlot(plotData, title) {
+                const layout = { ...this.config.plotLayout, title: { text: title, font: { size: 16 } } };
+                Plotly.newPlot(this.ui.plotDiv, plotData, layout, { responsive: true, displaylogo: false });
+                this.updatePlotTheme();
+            },
+            
+            updatePlotTheme() {
+                if(!this.ui.plotDiv.data) return;
+                const bg = this.state.isDarkMode ? '#1e293b' : '#ffffff';
+                const text = this.state.isDarkMode ? '#e2e8f0' : '#334155';
+                const grid = this.state.isDarkMode ? '#334155' : '#e2e8f0';
+                
+                Plotly.relayout(this.ui.plotDiv, {
+                    'paper_bgcolor': bg, 'plot_bgcolor': bg, 'font.color': text,
+                    'xaxis.gridcolor': grid, 'yaxis.gridcolor': grid,
+                });
+            },
+
+            // --- MÉTODOS AUXILIARES E DE CÁLCULO ---
+            helpers: {
+                parseFunction(funcStr) {
+                    return funcStr.trim().toLowerCase().replace(/\s+/g, '').replace(/ln/g, 'log').replace(/e\^/g, 'exp')
+                        .replace(/(\d)([a-z(])/g, '$1*$2').replace(/([a-z)])(\d)/g, '$1*$2')
+                        .replace(/\)\(/g, ')*(').replace(/([a-z)])\(/g, '$1*(');
+                },
+                evaluateFunction(node, x) {
+                    try {
+                        const result = node.evaluate({ x });
+                        return isFinite(result) ? result : NaN;
+                    } catch { return NaN; }
+                }
+            },
+            
+            calculators: {
+                derivative(funcStr) {
+                    const x_point = parseFloat(document.getElementById('derivativePoint').value);
+                    if (isNaN(x_point)) throw new Error('Ponto "x" inválido.');
+                    
+                    const node = math.parse(funcStr);
+                    const h = 0.0001;
+                    const v = {
+                        xp: x_point + h, xm: x_point - h,
+                        fx: CalcProApp.helpers.evaluateFunction(node, x_point),
+                        fxp: CalcProApp.helpers.evaluateFunction(node, x_point + h),
+                        fxm: CalcProApp.helpers.evaluateFunction(node, x_point - h),
+                    };
+                    const d1 = (v.fxp - v.fxm) / (2 * h);
+                    const d2 = (v.fxp - 2 * v.fx + v.fxm) / (h * h);
+                    const d1Display = isNaN(d1) ? "Indefinido" : d1.toFixed(5);
+                    const d2Display = isNaN(d2) ? "Indefinido" : d2.toFixed(5);
+
+                    const summaryHTML = `
+                        <div class="p-4 rounded-lg bg-white/50 dark:bg-black/20 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><p class="text-sm">Primeira Derivada em x = ${x_point}</p><p class="text-2xl font-bold text-blue-600 dark:text-blue-400">f'(${x_point}) ≈ ${d1Display}</p></div>
+                            <div><p class="text-sm">Segunda Derivada em x = ${x_point}</p><p class="text-2xl font-bold text-purple-600 dark:text-purple-400">f''(${x_point}) ≈ ${d2Display}</p></div>
+                        </div>`;
+
+                    const stepsHTML = `<div class="space-y-6">
+                        <div>
+                            <h4 class="font-semibold text-lg mb-2">Cálculo da Primeira Derivada (f')</h4>
+                            <div class="space-y-3">
+                                <div class="step-card p-4 rounded-lg"><p><strong>1. Método:</strong> Fórmula das Diferenças Centrais.</p><p class="text-center mt-2">$$ f'(x) \\approx \\frac{f(x + h) - f(x - h)}{2h} $$</p></div>
+                                <div class="step-card p-4 rounded-lg"><p><strong>2. Parâmetros:</strong> $x = ${x_point}$ e $h = ${h}$</p></div>
+                                <div class="step-card p-4 rounded-lg"><p><strong>3. Cálculo dos pontos:</strong></p><ul class="list-disc list-inside ml-4 font-mono"><li>$f(x+h) = f(${v.xp.toFixed(4)}) = ${v.fxp.toFixed(7)}$</li><li>$f(x-h) = f(${v.xm.toFixed(4)}) = ${v.fxm.toFixed(7)}$</li></ul></div>
+                                <div class="step-card p-4 rounded-lg"><p><strong>4. Substituição:</strong></p><p class="text-center mt-2">$$ f'(${x_point}) \\approx \\frac{${v.fxp.toFixed(7)} - (${v.fxm.toFixed(7)})}{2 \\cdot ${h}} $$</p></div>
+                                <div class="step-card p-4 rounded-lg bg-blue-100 dark:bg-blue-900/30 border-blue-500"><p><strong>5. Resultado:</strong></p><p class="text-center font-bold text-xl mt-1">$$ f'(${x_point}) \\approx ${d1Display} $$</p></div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-lg mb-2">Cálculo da Segunda Derivada (f'')</h4>
+                            <div class="space-y-3">
+                                <div class="step-card p-4 rounded-lg"><p><strong>1. Método:</strong> Fórmula das Diferenças Centrais.</p><p class="text-center mt-2">$$ f''(x) \\approx \\frac{f(x + h) - 2f(x) + f(x - h)}{h^2} $$</p></div>
+                                <div class="step-card p-4 rounded-lg"><p><strong>2. Ponto Central:</strong> $f(x) = f(${x_point}) = ${v.fx.toFixed(7)}$</p></div>
+                                <div class="step-card p-4 rounded-lg"><p><strong>3. Substituição:</strong></p><p class="text-center mt-2">$$ f''(${x_point}) \\approx \\frac{${v.fxp.toFixed(7)} - 2(${v.fx.toFixed(7)}) + ${v.fxm.toFixed(7)}}{{${h}}^2} $$</p></div>
+                                <div class="step-card p-4 rounded-lg bg-purple-100 dark:bg-purple-900/30 border-purple-500"><p><strong>4. Resultado:</strong></p><p class="text-center font-bold text-xl mt-1">$$ f''(${x_point}) \\approx ${d2Display} $$</p></div>
+                            </div>
+                        </div>
+                    </div>`;
+                    
+                    const plotData = [], xValues = [];
+                    const nodeD1 = math.derivative(funcStr, 'x'), nodeD2 = math.derivative(nodeD1, 'x');
+                    for (let x = x_point - 5; x <= x_point + 5; x += 0.1) xValues.push(x);
+                    
+                    const traces = [
+                        { name: 'f(x)', node: node, color: '#3b82f6', width: 3 },
+                        { name: "f'(x)", node: nodeD1, color: '#ef4444', dash: 'dash' },
+                        { name: "f''(x)", node: nodeD2, color: '#22c55e', dash: 'dot' },
+                    ];
+
+                    traces.forEach(trace => {
+                        const yValues = xValues.map(x => CalcProApp.helpers.evaluateFunction(trace.node, x));
+                        plotData.push({ x: xValues, y: yValues, name: trace.name, type: 'scatter', mode: 'lines', line: { color: trace.color, width: trace.width, dash: trace.dash } });
+                    });
+                    
+                    return { summaryHTML, stepsHTML, plotData, title: `Análise da Derivada de f(x)` };
+                },
+                critical(funcStr) {
+                    return { summaryHTML: '<p>Funcionalidade de Pontos Críticos em desenvolvimento.</p>', plotData: [], title: '' };
+                },
+                integral(funcStr) {
+                    return { summaryHTML: '<p>Funcionalidade de Integral em desenvolvimento.</p>', plotData: [], title: '' };
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => CalcProApp.init());
+    </script>
+</body>
+</html>
