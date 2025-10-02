@@ -71,6 +71,7 @@
                     <button data-operation="derivative" class="nav-btn transition-colors hover:text-blue-500">📈 Derivadas</button>
                     <button data-operation="critical" class="nav-btn transition-colors hover:text-green-500">🎯 Pontos Críticos</button>
                     <button data-operation="integral" class="nav-btn transition-colors hover:text-purple-500">∫ Integrais</button>
+                
                 </div>
 
                 <div class="flex items-center space-x-3">
@@ -198,7 +199,7 @@
                 operations: {
                     derivative: { title: 'Cálculo de Derivadas', icon: '📈', example: 'x^3 - 2*x^2 + 5' },
                     critical: { title: 'Análise de Pontos Críticos', icon: '🎯', example: 'x^3 - 3*x' },
-                    integral: { title: 'Integração Numérica', icon: '∫', example: 'sin(x) + 1' },
+                    integral: { title: 'Integração Numérica', icon: '∫', example: 'sin(x)+1' },
                 },
                 plotLayout: {
                     showlegend: true,
@@ -234,6 +235,8 @@
                     summaryResults: document.getElementById('summaryResults'),
                     stepByStepResults: document.getElementById('stepByStepResults'),
                     plotDiv: document.getElementById('plotDiv'),
+                    theoryContent: document.getElementById('theoryContent'),
+                    theoryBtn: document.getElementById('theory-btn'),
                 };
             },
 
@@ -253,6 +256,7 @@
                 this.ui.clearBtn.addEventListener('click', () => this.clearAll());
                 this.ui.exampleBtn.addEventListener('click', () => this.loadExample());
                 this.ui.calculateBtn.addEventListener('click', () => this.handleCalculation());
+                this.ui.theoryBtn.addEventListener('click', () => this.showTheory());
             },
 
             loadInitialState() {
@@ -293,6 +297,7 @@
                 this.ui.intervalInputs.classList.toggle('hidden', !['critical', 'integral'].includes(this.state.currentOperation));
                 
                 this.clearAll();
+                this.showTheory();
             },
 
             toggleTheme() {
@@ -366,6 +371,155 @@
                 }
             },
 
+            showTheory() {
+                let html = '';
+                switch (this.state.currentOperation) {
+                    case 'derivative':
+                        html = `
+                            <h4 class="font-semibold mb-2">📈 Derivadas</h4>
+                            <div class="space-y-2">
+                                <p>
+                                    <strong>Conceito:</strong><br>
+                                    A derivada de uma função $f(x)$ representa a taxa de variação instantânea de $f$ em relação a $x$. É como medir a inclinação da curva em cada ponto. No gráfico, a derivada indica se a função está subindo, descendo ou estacionária.
+                                </p>
+                                <p>
+                                    <strong>Aplicações:</strong><br>
+                                    - Encontrar máximos e mínimos locais (otimização)<br>
+                                    - Estudar o comportamento de gráficos (crescimento/decrescimento)<br>
+                                    - Calcular velocidade, aceleração, taxas de crescimento, juros instantâneos, etc.<br>
+                                    - Modelagem de fenômenos físicos e econômicos
+                                </p>
+                                <p>
+                                    <strong>Como calcular?</strong><br>
+                                    A derivada pode ser obtida por regras algébricas (manual) ou por métodos numéricos (aproximação).<br>
+                                    <em>Exemplo:</em> Se $f(x) = x^2$, então $f'(x) = 2x$.<br>
+                                    <em>Regras comuns:</em><br>
+                                    $$ \\frac{d}{dx}[x^n] = n x^{n-1} $$<br>
+                                    $$ \\frac{d}{dx}[f(x)+g(x)] = f'(x)+g'(x) $$<br>
+                                    $$ \\frac{d}{dx}[f(x)g(x)] = f'(x)g(x) + f(x)g'(x) $$<br>
+                                    $$ \\frac{d}{dx}[f(g(x))] = f'(g(x))g'(x) $$
+                                </p>
+                                <p>
+                                    <strong>Dicas:</strong><br>
+                                    - Funções polinomiais têm derivadas simples.<br>
+                                    - Para funções trigonométricas: $\\frac{d}{dx}[\\sin(x)] = \\cos(x)$, $\\frac{d}{dx}[\\cos(x)] = -\\sin(x)$.<br>
+                                    - A derivada de uma constante é zero.<br>
+                                    - A derivada pode ser usada para encontrar pontos de máximo, mínimo e inflexão.
+                                </p>
+                                <p>
+                                    <strong>Exemplo prático:</strong><br>
+                                    Se $f(x) = 3x^3 - 2x^2 + 5$, então $f'(x) = 9x^2 - 4x$.<br>
+                                    Para $x = 1$: $f'(1) = 9 \cdot 1^2 - 4 \cdot 1 = 5$.
+                                </p>
+                                <p>
+                                    <strong>Curiosidade:</strong><br>
+                                    A derivada é a base do cálculo diferencial e aparece em quase todas as áreas da ciência e engenharia.
+                                </p>
+                            </div>
+                        `;
+                        break;
+                    case 'critical':
+                        html = `
+                            <h4 class="font-semibold mb-2">🎯 Pontos Críticos</h4>
+                            <div class="space-y-2">
+                                <p>
+                                    <strong>Conceito:</strong><br>
+                                    Pontos críticos são valores de $x$ onde a derivada da função é zero ou não existe. Eles indicam possíveis máximos, mínimos ou pontos de inflexão no gráfico da função.
+                                </p>
+                                <p>
+                                    <strong>Aplicações:</strong><br>
+                                    - Identificar extremos locais (máximos/mínimos)<br>
+                                    - Analisar estabilidade de sistemas físicos e econômicos<br>
+                                    - Estudar mudanças de concavidade (pontos de inflexão)<br>
+                                    - Otimização de processos e recursos
+                                </p>
+                                <p>
+                                    <strong>Como encontrar?</strong><br>
+                                    1. Calcule $f'(x)$ e encontre os pontos onde $f'(x) = 0$ ou $f'(x)$ não existe.<br>
+                                    2. Use $f''(x)$ para classificar:<br>
+                                    &nbsp;&nbsp;- Se $f''(x) > 0$: mínimo local (curva para cima)<br>
+                                    &nbsp;&nbsp;- Se $f''(x) < 0$: máximo local (curva para baixo)<br>
+                                    &nbsp;&nbsp;- Se $f''(x) = 0$: ponto de inflexão ou teste adicional
+                                </p>
+                                <p>
+                                    <strong>Dicas:</strong><br>
+                                    - Sempre analise o intervalo de interesse.<br>
+                                    - Funções polinomiais podem ter vários pontos críticos.<br>
+                                    - Pontos de inflexão mudam a concavidade do gráfico.<br>
+                                    - Nem todo ponto onde $f'(x)=0$ é máximo ou mínimo; pode ser inflexão.
+                                </p>
+                                <p>
+                                    <strong>Exemplo prático:</strong><br>
+                                    Para $f(x) = x^3 - 3x$, $f'(x) = 3x^2 - 3$.<br>
+                                    Pontos críticos: $x = -1$ e $x = 1$.<br>
+                                    Classificação pelo sinal de $f''(x)$:<br>
+                                    $f''(x) = 6x \rightarrow f''(-1) = -6$ (máximo), $f''(1) = 6$ (mínimo).
+                                </p>
+                                <p>
+                                    <strong>Curiosidade:</strong><br>
+                                    Pontos críticos são essenciais em problemas de otimização, como maximizar lucro ou minimizar custos.
+                                </p>
+                            </div>
+                        `;
+                        break;
+                    case 'integral':
+                        html = `
+                            <h4 class="font-semibold mb-2">∫ Integrais</h4>
+                            <div class="space-y-2">
+                                <p>
+                                    <strong>Conceito:</strong><br>
+                                    A integral definida calcula a área sob a curva de uma função entre dois pontos. É usada para somar valores contínuos, como área, volume, distância, trabalho, energia, etc.
+                                </p>
+                                <p>
+                                    <strong>Aplicações:</strong><br>
+                                    - Calcular áreas e volumes<br>
+                                    - Determinar distância percorrida a partir da velocidade<br>
+                                    - Somar grandezas físicas ao longo de um intervalo<br>
+                                    - Cálculo de trabalho, energia, probabilidade acumulada
+                                </p>
+                                <p>
+                                    <strong>Como calcular?</strong><br>
+                                    A integral definida de $f(x)$ de $a$ até $b$ é:<br>
+                                    $$ \\int_a^b f(x) \\, dx $$<br>
+                                    Pode ser calculada analiticamente (manual) ou numericamente (regra do trapézio, Simpson, etc).<br>
+                                    <em>Regra do Trapézio:</em> Aproxima a área por pequenos trapézios sob a curva.
+                                </p>
+                                <p>
+                                    <strong>Dicas:</strong><br>
+                                    - Funções simples podem ser integradas manualmente.<br>
+                                    - Para funções complexas, use métodos numéricos.<br>
+                                    - O resultado pode ser negativo se a função estiver abaixo do eixo $x$.<br>
+                                    - A integral acumulada pode ser interpretada como soma contínua.
+                                </p>
+                                <p>
+                                    <strong>Exemplo prático:</strong><br>
+                                    Se $f(x) = x$, então $$ \\int_0^1 x \\, dx = 0.5 $$.<br>
+                                    Para $f(x) = \\sin(x)+1$, a integral soma a área acima do eixo $x$.<br>
+                                    Se $f(x) = $ velocidade, a integral fornece a distância total percorrida.
+                                </p>
+                                <p>
+                                    <strong>Curiosidade:</strong><br>
+                                    O símbolo $\\int$ foi criado por Leibniz e representa a soma contínua de infinitos pedaços.
+                                </p>
+                            </div>
+                        `;
+                        break;
+                    default:
+                        html = `<div class="bg-white/50 dark:bg-black/20 rounded-lg p-3">
+                                    <h4 class="font-semibold mb-2">💡 Bem-vindo!</h4>
+                                    <p class="text-slate-600 dark:text-slate-300">Selecione uma operação no menu superior para começar.</p>
+                                </div>`;
+                }
+                this.ui.theoryContent.innerHTML = html;
+                // Renderiza fórmulas matemáticas após inserir o HTML
+                renderMathInElement(this.ui.theoryContent, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false}
+                    ]
+                });
+            },
+
             // --- LÓGICA PRINCIPAL DE CÁLCULO E RENDERIZAÇÃO ---
 
             async handleCalculation() {
@@ -425,9 +579,17 @@
             // --- MÉTODOS AUXILIARES E DE CÁLCULO ---
             helpers: {
                 parseFunction(funcStr) {
-                    return funcStr.trim().toLowerCase().replace(/\s+/g, '').replace(/ln/g, 'log').replace(/e\^/g, 'exp')
-                        .replace(/(\d)([a-z(])/g, '$1*$2').replace(/([a-z)])(\d)/g, '$1*$2')
-                        .replace(/\)\(/g, ')*(').replace(/([a-z)])\(/g, '$1*(');
+                    // Corrige multiplicações implícitas e funções matemáticas
+                    return funcStr
+                        .replace(/\s+/g, '')
+                        // Adiciona * apenas entre número e variável ou número e parênteses
+                        .replace(/(\d)([a-z])/gi, '$1*$2') // 2x -> 2*x
+                        .replace(/(\d)\(/g, '$1*(')        // 2(x) -> 2*(x)
+                        .replace(/([a-z])(\d)/gi, '$1*$2') // x2 -> x*2
+                        .replace(/\)\(/g, ')*(')           // )( -> )*(
+                        // Não adiciona * entre função e parênteses
+                        .replace(/ln/g, 'log')             // ln(x) -> log(x)
+                        .replace(/e\^/g, 'exp');           // e^x -> expx
                 },
                 evaluateFunction(node, x) {
                     try {
@@ -501,10 +663,136 @@
                     return { summaryHTML, stepsHTML, plotData, title: `Análise da Derivada de f(x)` };
                 },
                 critical(funcStr) {
-                    return { summaryHTML: '<p>Funcionalidade de Pontos Críticos em desenvolvimento.</p>', plotData: [], title: '' };
+                    // Obtém os limites do intervalo
+                    const a = parseFloat(document.getElementById('lowerLimit').value);
+                    const b = parseFloat(document.getElementById('upperLimit').value);
+                    if (isNaN(a) || isNaN(b) || a >= b) {
+                        return { summaryHTML: '<p>Intervalo inválido.</p>', plotData: [], title: '' };
+                    }
+
+                    // Derivadas
+                    const node = math.parse(funcStr);
+                    const d1 = math.derivative(funcStr, 'x');
+                    const d2 = math.derivative(d1, 'x');
+
+                    // Busca zeros da primeira derivada (pontos críticos)
+                    const step = (b - a) / 200;
+                    let criticalPoints = [];
+                    for (let x = a; x < b; x += step) {
+                        const y1 = CalcProApp.helpers.evaluateFunction(d1, x);
+                        const y2 = CalcProApp.helpers.evaluateFunction(d1, x + step);
+                        if (isFinite(y1) && isFinite(y2) && y1 * y2 < 0) {
+                            // Aproximação do zero entre x e x+step
+                            const xc = (x + x + step) / 2;
+                            criticalPoints.push(xc);
+                        }
+                    }
+
+                    // Classifica os pontos críticos usando a segunda derivada
+                    let summaryHTML = '<h4 class="font-bold mb-2">Pontos Críticos Encontrados:</h4><ul class="list-disc ml-6">';
+                    if (criticalPoints.length === 0) {
+                        summaryHTML += '<li>Nenhum ponto crítico encontrado no intervalo.</li>';
+                    } else {
+                        criticalPoints.forEach(xc => {
+                            const fx = CalcProApp.helpers.evaluateFunction(node, xc);
+                            const d2val = CalcProApp.helpers.evaluateFunction(d2, xc);
+                            let tipo = '';
+                            if (d2val > 0) tipo = 'Mínimo Local';
+                            else if (d2val < 0) tipo = 'Máximo Local';
+                            else tipo = 'Ponto de inflexão ou indefinido';
+                            summaryHTML += `<li>x = ${xc.toFixed(4)}, f(x) = ${fx.toFixed(4)} <span class="font-semibold">(${tipo})</span></li>`;
+                        });
+                    }
+                    summaryHTML += '</ul>';
+
+                    // Passo a passo
+                    let stepsHTML = `
+                        <div class="step-card p-4 rounded-lg mb-3">
+                            <strong>1. Derivada:</strong> Calculamos f'(x) e f''(x) simbolicamente.<br>
+                            <span class="font-mono">f'(x) = ${d1.toString()}</span><br>
+                            <span class="font-mono">f''(x) = ${d2.toString()}</span>
+                        </div>
+                        <div class="step-card p-4 rounded-lg mb-3">
+                            <strong>2. Busca numérica:</strong> Procuramos onde f'(x) muda de sinal no intervalo [${a}, ${b}].
+                        </div>
+                        <div class="step-card p-4 rounded-lg mb-3">
+                            <strong>3. Classificação:</strong> Para cada ponto crítico, verificamos f''(x) para classificar como mínimo, máximo ou inflexão.
+                        </div>
+                    `;
+
+                    // Gráfico
+                    const xValues = [];
+                    for (let x = a; x <= b; x += step) xValues.push(x);
+                    const yValues = xValues.map(x => CalcProApp.helpers.evaluateFunction(node, x));
+                    const plotData = [
+                        { x: xValues, y: yValues, name: 'f(x)', type: 'scatter', mode: 'lines', line: { color: '#3b82f6', width: 3 } },
+                        {
+                            x: criticalPoints, y: criticalPoints.map(xc => CalcProApp.helpers.evaluateFunction(node, xc)),
+                            name: 'Pontos Críticos', type: 'scatter', mode: 'markers',
+                            marker: { color: '#ef4444', size: 12, symbol: 'diamond' }
+                        }
+                    ];
+
+                    return { summaryHTML, stepsHTML, plotData, title: 'Análise de Pontos Críticos' };
                 },
                 integral(funcStr) {
-                    return { summaryHTML: '<p>Funcionalidade de Integral em desenvolvimento.</p>', plotData: [], title: '' };
+                    // Obtém os limites do intervalo
+                    const a = parseFloat(document.getElementById('lowerLimit').value);
+                    const b = parseFloat(document.getElementById('upperLimit').value);
+                    if (isNaN(a) || isNaN(b) || a >= b) {
+                        return { summaryHTML: '<p>Intervalo inválido.</p>', plotData: [], title: '' };
+                    }
+
+                    // Parse da função
+                    const node = math.parse(funcStr);
+
+                    // Cálculo numérico da integral (regra do trapézio)
+                    const n = 200;
+                    const h = (b - a) / n;
+                    let integral = 0;
+                    const xValues = [];
+                    const yValues = [];
+                    for (let i = 0; i <= n; i++) {
+                        const x = a + i * h;
+                        const y = CalcProApp.helpers.evaluateFunction(node, x);
+                        xValues.push(x);
+                        yValues.push(y);
+                        if (i === 0 || i === n) {
+                            integral += y / 2;
+                        } else {
+                            integral += y;
+                        }
+                    }
+                    integral *= h;
+
+                    // HTML de resumo
+                    const summaryHTML = `
+                        <div class="p-4 rounded-lg bg-white/50 dark:bg-black/20">
+                            <p class="text-sm">Integral definida de <strong>a = ${a}</strong> até <strong>b = ${b}</strong>:</p>
+                            <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">$$ \\int_{${a}}^{${b}} f(x) dx \\approx ${integral.toFixed(6)} $$</p>
+                        </div>
+                    `;
+
+                    // Passo a passo
+                    const stepsHTML = `
+                        <div class="step-card p-4 rounded-lg mb-3">
+                            <strong>1. Método:</strong> Regra do Trapézio com ${n} subintervalos.<br>
+                            <span class="font-mono">h = ${(h).toFixed(4)}</span>
+                        </div>
+                        <div class="step-card p-4 rounded-lg mb-3">
+                            <strong>2. Cálculo:</strong> Somamos as áreas dos trapézios entre a e b.
+                        </div>
+                        <div class="step-card p-4 rounded-lg mb-3">
+                            <strong>3. Resultado:</strong> $$ \\int_{${a}}^{${b}} f(x) dx \\approx ${integral.toFixed(6)} $$
+                        </div>
+                    `;
+
+                    // Gráfico
+                    const plotData = [
+                        { x: xValues, y: yValues, name: 'f(x)', type: 'scatter', mode: 'lines', line: { color: '#8b5cf6', width: 3 } }
+                    ];
+
+                    return { summaryHTML, stepsHTML, plotData, title: 'Integral Definida' };
                 }
             }
         };
